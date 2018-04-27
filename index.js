@@ -12,52 +12,52 @@ const { HttpLink } = require('apollo-link-http');
 const fetch = require('node-fetch');
 
 async function buildApp() {
-    const chirpLink = new HttpLink({
+    const resourceLink = new HttpLink({
         uri: 'https://p0q3wwq3q0.lp.gql.zone/graphql',
         fetch,
     });
-    const authorLink = new HttpLink({
+    const productLink = new HttpLink({
         uri: 'https://0vj8x397v5.lp.gql.zone/graphql',
         fetch,
     });
     let chirpSchema;
     let authorSchema;
     try {
-        chirpSchema = makeRemoteExecutableSchema({
-            schema: await introspectSchema(chirpLink),
-            link: chirpLink,
+        resourceSchema = makeRemoteExecutableSchema({
+            schema: await introspectSchema(resourceLink),
+            link: resourceLink,
         });
-        authorSchema = makeRemoteExecutableSchema({
-            schema: await introspectSchema(authorLink),
-            link: authorLink,
+        productSchema = makeRemoteExecutableSchema({
+            schema: await introspectSchema(productLink),
+            link: productLink,
         });
     } catch (e) {
         console.error(e);
     }
 
     const linkTypeDefs = `
-  extend type User {
-    chirps: [Chirp]
+  extend type Product {
+    resources: [Resource]
   }
 
-  extend type Chirp {
-    author: User
+  extend type Resource {
+    product: Product
   }
 `;
 
     const schema = mergeSchemas({
-        schemas: [chirpSchema, authorSchema, linkTypeDefs],
+        schemas: [productSchema, resourceSchema, linkTypeDefs],
         resolvers: {
-            User: {
-                chirps: {
-                    fragment: `fragment UserFragment on User { id }`,
-                    resolve(user, args, context, info) {
+            Product: {
+                resources: {
+                    fragment: `fragment ResourcesFragment on Product { id }`,
+                    resolve(product, args, context, info) {
                         return info.mergeInfo.delegateToSchema({
-                            schema: chirpSchema,
+                            schema: resourceSchema,
                             operation: 'query',
-                            fieldName: 'chirpsByAuthorId',
+                            fieldName: 'resourcesByProductId',
                             args: {
-                                authorId: user.id,
+                                productId: product.id,
                             },
                             context,
                             info,
@@ -65,16 +65,16 @@ async function buildApp() {
                     },
                 },
             },
-            Chirp: {
-                author: {
-                    fragment: `fragment ChirpFragment on Chirp { authorId }`,
-                    resolve(chirp, args, context, info) {
+            Resource: {
+                product: {
+                    fragment: `fragment ProductFragment on Resource { productId }`,
+                    resolve(resource, args, context, info) {
                         return info.mergeInfo.delegateToSchema({
-                            schema: authorSchema,
+                            schema: productSchema,
                             operation: 'query',
-                            fieldName: 'userById',
+                            fieldName: 'productById',
                             args: {
-                                id: chirp.authorId,
+                                id: resource.productId,
                             },
                             context,
                             info,
