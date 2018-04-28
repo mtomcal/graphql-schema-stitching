@@ -20,8 +20,8 @@ async function buildApp() {
         uri: 'https://0vj8x397v5.lp.gql.zone/graphql',
         fetch,
     });
-    let chirpSchema;
-    let authorSchema;
+    let resourceSchema;
+    let productSchema;
     try {
         resourceSchema = makeRemoteExecutableSchema({
             schema: await introspectSchema(resourceLink),
